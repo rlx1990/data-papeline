@@ -1,28 +1,31 @@
-# Fakestore Data Pipeline
-
-Projeto de engenharia de dados com foco em ingestão, transformação e modelagem de dados a partir de uma API pública de e-commerce.
+# Data Pipeline de Vendas
 
 ## Objetivo
-Construir um pipeline de dados completo utilizando a Fakestore API, organizando os dados nas camadas:
-- Raw
-- Trusted
-- Curated
+Construir um pipeline de dados de vendas, desde a ingestão de dados brutos a partir de uma API pública até uma estrutura pronta para consumo em ferramentas de BI, seguindo boas práticas de engenharia de dados.
 
-## Fonte de Dados
-- Fakestore API  
-  https://fakestoreapi.com/
-
-Endpoints utilizados:
-- `/products`
-- `/users`
-- `/carts`
+## Arquitetura
+FakeStore API  
+→ Ingestão (Python)  
+→ Data Lake (raw → trusted → curated)  
+→ Data Warehouse  
+→ Power BI
 
 ## Stack
 - Python
-- Requests
-- JSON
-- Git / GitHub
+- Pandas / PyArrow
+- PostgreSQL
+- SQL
 
-## Arquitetura (visão geral)
-API → Raw (JSON) → Trusted → Curated → BI
+## Estrutura de Pastas
+data/
+- raw/ → dados brutos, sem qualquer transformação
+- trusted/ → dados limpos e padronizados
+- curated/ → dados modelados para analytics e BI
 
+src/
+- ingestion/ → scripts de ingestão de dados
+- transformation/ → transformações e modelagem
+- utils/ → funções auxiliares
+
+## Status
+Projeto em desenvolvimento.
