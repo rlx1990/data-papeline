@@ -1,31 +1,169 @@
-# Data Pipeline de Vendas
+>>       Data Pipeline & Data Warehouse 
 
-## Objetivo
-Construir um pipeline de dados de vendas, desde a ingestão de dados brutos a partir de uma API pública até uma estrutura pronta para consumo em ferramentas de BI, seguindo boas práticas de engenharia de dados.
+Pipeline completo de Engenharia de Dados com ingestão de API pública, modelagem dimensional, carga incremental, auditoria de execução e orquestração com Apache Airflow.
 
-## Arquitetura
-FakeStore API  
-→ Ingestão (Python)  
-→ Data Lake (raw → trusted → curated)  
-→ Data Warehouse  
-→ Power BI
+>>Objetivo
 
-## Stack
-- Python
-- Pandas / PyArrow
-- PostgreSQL
-- SQL
+Simular um ambiente corporativo de dados, contemplando:
 
-## Estrutura de Pastas
-data/
-- raw/ → dados brutos, sem qualquer transformação
-- trusted/ → dados limpos e padronizados
-- curated/ → dados modelados para analytics e BI
+Ingestão de dados via API
 
-src/
-- ingestion/ → scripts de ingestão de dados
-- transformation/ → transformações e modelagem
-- utils/ → funções auxiliares
+Armazenamento em camada Staging (JSON raw)
 
-## Status
-Projeto em desenvolvimento.
+Transformação para Data Warehouse dimensional (Star Schema)
+
+Carga incremental controlada por metadata
+
+Auditoria de execução de ETL
+
+Orquestração com Apache Airflow
+
+Ambiente containerizado com Docker
+
+>> Boas Práticas Aplicadas 
+
+Separação de camadas (Staging / DW)
+
+Idempotência com ON CONFLICT
+
+Controle incremental via metadata
+
+Auditoria de execução
+
+Uso de MERGE
+
+Tratamento de exceções
+
+Organização modular do código
+
+Containerização
+
+Arquitetura
+
+>> Fluxo do pipeline:
+
+API → Staging (raw JSON) → Transformação → Data Warehouse → Airflow
+
+Camadas implementadas:
+
+Staging: armazenamento bruto em JSONB
+
+Data Warehouse: modelo estrela com dimensões e fato
+
+Orquestração: DAG no Airflow com dependências entre tarefas
+
+>> Stack Utilizada
+
+Python
+
+PostgreSQL
+
+Apache Airflow
+
+Docker / Docker Compose
+
+Psycopg2
+
+SQL (PostgreSQL)
+
+Modelagem Dimensional
+
+Esquema estrela composto por:
+
+>> Dimensões
+
+dim_categoria
+
+dim_produto
+
+dim_cliente
+
+dim_tempo
+
+>> Fato
+
+fato_vendas
+
+A tabela fato possui constraint única composta:
+
+(numero_pedido, sk_produto)
+
+Garantindo idempotência e prevenindo duplicidade.
+
+Carga Incremental
+
+A carga da fato é incremental com base na tabela:
+
+control.etl_metadata
+
+O campo last_processed_date define o ponto de corte para novas execuções.
+
+>> Benefícios:
+
+Evita reprocessamento completo
+
+Permite execução recorrente segura
+
+Reduz custo computacional
+
+Auditoria de ETL
+
+Cada processo registra:
+
+Nome do processo
+
+Horário de início e fim
+
+Quantidade de linhas afetadas
+
+Status (SUCCESS / FAILED)
+
+Mensagem de erro
+
+Tabela utilizada:
+
+control.etl_audit_log
+
+Isso permite rastreabilidade e observabilidade do pipeline.
+
+>> Orquestração
+
+O pipeline é orquestrado via Apache Airflow com tasks independentes:
+
+dim_categoria → dim_produto → fato_vendas
+dim_cliente → fato_vendas
+
+Executado com PythonOperator, respeitando dependências entre dimensões e fato.
+
+>> Execução
+
+Execução manual:
+
+python -m src.transformation.transform
+
+Execução via Docker (Airflow):
+
+cd airflow
+docker-compose up --build
+
+Acesso:
+
+http://localhost:8080
+
+Boas Práticas Aplicadas
+
+Separação de camadas (Staging / DW)
+
+Idempotência com ON CONFLICT
+
+Controle incremental via metadata
+
+Auditoria de execução
+
+Uso de MERGE
+
+Tratamento de exceções
+
+Organização modular do código
+
+Containerização
