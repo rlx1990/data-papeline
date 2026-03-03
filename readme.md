@@ -1,6 +1,6 @@
 #  Data Pipeline & Data Warehouse
 
-Projeto de Engenharia de Dados que simula um ambiente corporativo completo, incluindo ingestão de API, armazenamento em camada Raw, transformação para Data Warehouse dimensional, carga incremental, auditoria e orquestração com Airflow.
+O projeto simula um ambiente corporativo completo, incluindo ingestão de API, armazenamento em camada Raw, transformação para Data Warehouse dimensional, carga incremental, auditoria e orquestração com Airflow. O ambiente é totalmente containerizado com Docker, garantindo isolamento de dependências, reprodutibilidade e facilidade de execução em qualquer máquina.
 
 ---
 
@@ -183,15 +183,47 @@ data-pipeline/
 
 #  Stack Tecnológica
 
-| Tecnologia     | Finalidade               |
-| -------------- | ------------------------ |
-| Python         | Ingestão e transformação |
-| PostgreSQL     | Data Warehouse           |
-| Apache Airflow | Orquestração             |
-| SQL            | Modelagem e consultas    |
-| Git            | Versionamento            |
+| Tecnologia     | Finalidade                 |
+| -------------- | ---------------------------|
+| Python         | Ingestão e transformação   |
+| PostgreSQL     | Data Warehouse             |
+| Docker         | Containerização do ambiente|
+| Apache Airflow | Orquestração               |
+| SQL            | Modelagem e consultas      |
+| Git            | Versionamento              |
 
 ---
+
+# 🐳 Containerização com Docker
+
+O projeto é executado em ambiente containerizado utilizando **Docker**, garantindo:
+
+* Isolamento de dependências
+* Reprodutibilidade do ambiente
+* Facilidade de deploy
+* Simulação de ambiente corporativo
+
+## 🔹 Serviços Containerizados
+
+* **PostgreSQL** – Banco de dados do Data Warehouse
+* **Apache Airflow** – Orquestração do pipeline
+* (Opcional) Serviços auxiliares conforme necessidade
+
+## ▶️ Execução do Projeto
+
+Para subir o ambiente:
+
+```bash
+docker-compose up -d
+```
+
+Para derrubar o ambiente:
+
+```bash
+docker-compose down
+```
+
+O uso de Docker permite que qualquer pessoa execute o projeto sem necessidade de configuração manual de banco, Airflow ou dependências Python.
 
 
 
