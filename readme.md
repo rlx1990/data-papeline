@@ -1,169 +1,198 @@
->>       Data Pipeline & Data Warehouse 
+#  Data Pipeline & Data Warehouse
 
-Pipeline completo de Engenharia de Dados com ingestão de API pública, modelagem dimensional, carga incremental, auditoria de execução e orquestração com Apache Airflow.
+Projeto de Engenharia de Dados que simula um ambiente corporativo completo, incluindo ingestão de API, armazenamento em camada Raw, transformação para Data Warehouse dimensional, carga incremental, auditoria e orquestração com Airflow.
 
->>Objetivo
+---
 
-Simular um ambiente corporativo de dados, contemplando:
+#  Sumário
 
-Ingestão de dados via API
+* [Visão Geral](#-visão-geral)
+* [Arquitetura](#-arquitetura)
+* [Fluxo de Dados](#-fluxo-de-dados)
+* [Modelagem Dimensional](#-modelagem-dimensional)
+* [Carga Incremental](#-carga-incremental)
+* [Auditoria](#-auditoria)
+* [Estrutura do Projeto](#-estrutura-do-projeto)
+* [Stack Tecnológica](#-stack-tecnológica)
+* [Possibilidades Analíticas](#-possibilidades-analíticas)
+* [Evoluções Futuras](#-evoluções-futuras)
 
-Armazenamento em camada Staging (JSON raw)
+---
 
-Transformação para Data Warehouse dimensional (Star Schema)
+#  Visão Geral
 
-Carga incremental controlada por metadata
+Este projeto foi desenvolvido com o objetivo de simular um pipeline de dados corporativo, contemplando:
 
-Auditoria de execução de ETL
+* Ingestão de dados via API pública
+* Armazenamento de dados brutos (Raw Layer)
+* Transformação e modelagem dimensional
+* Carga incremental controlada
+* Auditoria de execução
+* Orquestração com Airflow
 
-Orquestração com Apache Airflow
+---
 
-Ambiente containerizado com Docker
+#  Arquitetura
 
->> Boas Práticas Aplicadas 
+A arquitetura segue um padrão clássico de Data Warehouse:
 
-Separação de camadas (Staging / DW)
+```
+API → Camada Raw (JSON) → Transformação → Data Warehouse (Postgres) → Consultas Analíticas
+```
 
-Idempotência com ON CONFLICT
+Camadas:
 
-Controle incremental via metadata
+1. Ingestão
+2. Raw
+3. Transformação
+4. Data Warehouse
+5. Camada Analítica
 
-Auditoria de execução
+---
 
-Uso de MERGE
+#  Fluxo de Dados
 
-Tratamento de exceções
+## 1️ Ingestão
 
-Organização modular do código
+* Consumo da API FakeStore
+* Extração de:
 
-Containerização
+  * Products
+  * Users
+  * Carts
+* Salvamento em JSON na camada Raw
 
-Arquitetura
+## 2️ Camada Raw
 
->> Fluxo do pipeline:
+* Dados armazenados sem transformação
+* Organização por data de extração
+* Base para reprocessamento futuro
 
-API → Staging (raw JSON) → Transformação → Data Warehouse → Airflow
+## 3️ Transformação
 
-Camadas implementadas:
+* Limpeza e padronização
+* Conversão de tipos
+* Tratamento de nulos
+* Separação em dimensões e fatos
 
-Staging: armazenamento bruto em JSONB
+## 4️ Data Warehouse
 
-Data Warehouse: modelo estrela com dimensões e fato
+* Modelo dimensional (Star Schema)
+* Separação entre tabelas fato e dimensão
+* Uso de surrogate keys
 
-Orquestração: DAG no Airflow com dependências entre tarefas
+---
 
->> Stack Utilizada
+#  Modelagem Dimensional
 
-Python
+O projeto utiliza o padrão **Star Schema**, separando:
 
-PostgreSQL
+##  Dimensões
 
-Apache Airflow
+* `dim_product`
+* `dim_user`
+* `dim_date`
 
-Docker / Docker Compose
+Características:
 
-Psycopg2
+* Dados descritivos
+* Identificador substituto (Surrogate Key)
+* Preparado para evolução (SCD)
 
-SQL (PostgreSQL)
+##  Tabela Fato
 
-Modelagem Dimensional
+* `fact_sales`
+* Contém métricas quantitativas
+* Chaves estrangeiras para dimensões
 
-Esquema estrela composto por:
+Exemplo estrutural:
 
->> Dimensões
+```sql
+fact_sales
+-----------
+id
+product_key
+user_key
+date_key
+quantity
+price
+total_amount
+```
 
-dim_categoria
+---
 
-dim_produto
+#  Carga Incremental
 
-dim_cliente
+O pipeline implementa estratégia de controle de execução:
 
-dim_tempo
+* Registro de execução via auditoria
+* Evita reprocessamento desnecessário
+* Preparado para:
 
->> Fato
+  * Controle por timestamp
+  * Controle por ID máximo
+  * Implementação futura de SCD Tipo 2
 
-fato_vendas
+---
 
-A tabela fato possui constraint única composta:
+#  Auditoria
 
-(numero_pedido, sk_produto)
+Tabela: `etl_audit_log`
 
-Garantindo idempotência e prevenindo duplicidade.
+Campos principais:
 
-Carga Incremental
+| Campo          | Descrição                    |
+| -------------- | ---------------------------- |
+| process_name   | Nome do processo executado   |
+| start_time     | Início da execução           |
+| end_time       | Fim da execução              |
+| status         | Sucesso / Falha              |
+| rows_processed | Quantidade processada        |
+| error_message  | Mensagem de erro (se houver) |
 
-A carga da fato é incremental com base na tabela:
+Objetivo:
 
-control.etl_metadata
+* Monitoramento
+* Rastreabilidade
+* Governança
 
-O campo last_processed_date define o ponto de corte para novas execuções.
+---
 
->> Benefícios:
+#  Estrutura do Projeto
 
-Evita reprocessamento completo
+```
+data-pipeline/
+│
+├── airflow/
+│   ├── dags/
+│   └── logs/              # Ignorado no Git
+│
+├── src/
+│   ├── ingestion/
+│   ├── transform/
+│   ├── warehouse/
+│   └── data/
+│       └── raw/           # Ignorado no Git
+│
+├── sql/
+├── requirements.txt
+└── .gitignore
+```
 
-Permite execução recorrente segura
+---
 
-Reduz custo computacional
+#  Stack Tecnológica
 
-Auditoria de ETL
+| Tecnologia     | Finalidade               |
+| -------------- | ------------------------ |
+| Python         | Ingestão e transformação |
+| PostgreSQL     | Data Warehouse           |
+| Apache Airflow | Orquestração             |
+| SQL            | Modelagem e consultas    |
+| Git            | Versionamento            |
 
-Cada processo registra:
+---
 
-Nome do processo
 
-Horário de início e fim
 
-Quantidade de linhas afetadas
 
-Status (SUCCESS / FAILED)
-
-Mensagem de erro
-
-Tabela utilizada:
-
-control.etl_audit_log
-
-Isso permite rastreabilidade e observabilidade do pipeline.
-
->> Orquestração
-
-O pipeline é orquestrado via Apache Airflow com tasks independentes:
-
-dim_categoria → dim_produto → fato_vendas
-dim_cliente → fato_vendas
-
-Executado com PythonOperator, respeitando dependências entre dimensões e fato.
-
->> Execução
-
-Execução manual:
-
-python -m src.transformation.transform
-
-Execução via Docker (Airflow):
-
-cd airflow
-docker-compose up --build
-
-Acesso:
-
-http://localhost:8080
-
-Boas Práticas Aplicadas
-
-Separação de camadas (Staging / DW)
-
-Idempotência com ON CONFLICT
-
-Controle incremental via metadata
-
-Auditoria de execução
-
-Uso de MERGE
-
-Tratamento de exceções
-
-Organização modular do código
-
-Containerização
