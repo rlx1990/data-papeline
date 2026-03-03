@@ -61,16 +61,37 @@ def load_json_to_postgres(file_path: str, table_name: str):
     with get_connection() as conn:
         with conn.cursor() as cursor:
 
+            
+            cursor.execute("""
+                CREATE SCHEMA IF NOT EXISTS staging;
+            """)
+
+          
+            create_table_query = sql.SQL("""
+                CREATE TABLE IF NOT EXISTS staging.{} (
+                    id SERIAL PRIMARY KEY,
+                    payload JSONB,
+                    ingestion_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """).format(sql.Identifier(table_name))
+
+            cursor.execute(create_table_query)
+            conn.commit()
+
+            
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
-            query = sql.SQL("""
+            
+            insert_query = sql.SQL("""
                 INSERT INTO staging.{} (payload)
                 VALUES (%s)
             """).format(sql.Identifier(table_name))
 
             for record in data:
-                cursor.execute(query, (json.dumps(record),))
+                cursor.execute(insert_query, (json.dumps(record),))
+
+            conn.commit()
 
             log(f"{len(data)} registros inseridos em staging.{table_name}")
 
