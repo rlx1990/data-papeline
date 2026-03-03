@@ -14,8 +14,8 @@ Projeto de Engenharia de Dados que simula um ambiente corporativo completo, incl
 * [Auditoria](#-auditoria)
 * [Estrutura do Projeto](#-estrutura-do-projeto)
 * [Stack Tecnológica](#-stack-tecnológica)
-* [Possibilidades Analíticas](#-possibilidades-analíticas)
-* [Evoluções Futuras](#-evoluções-futuras)
+
+
 
 ---
 
