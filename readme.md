@@ -1,93 +1,148 @@
-#  Data Pipeline & Data Warehouse
+# 🚀 Data Pipeline & Data Warehouse
 
-O projeto simula um ambiente corporativo completo, incluindo ingestão de API, armazenamento em camada Raw, transformação para Data Warehouse dimensional, carga incremental, auditoria e orquestração com Airflow. O ambiente é totalmente containerizado com Docker, garantindo isolamento de dependências, reprodutibilidade e facilidade de execução em qualquer máquina.
+Este projeto simula um **pipeline de dados corporativo completo**, incluindo ingestão de API, armazenamento em Data Lake, processamento distribuído com Spark, modelagem dimensional em Data Warehouse, carga incremental, auditoria de execução e orquestração com Airflow.
+
+Todo o ambiente é **containerizado com Docker**, garantindo isolamento de dependências, reprodutibilidade e facilidade de execução em qualquer máquina.
 
 ---
 
-#  Sumário
+# 📚 Sumário
 
 * [Visão Geral](#-visão-geral)
 * [Arquitetura](#-arquitetura)
 * [Fluxo de Dados](#-fluxo-de-dados)
+* [Camadas de Dados](#-camadas-de-dados)
 * [Modelagem Dimensional](#-modelagem-dimensional)
 * [Carga Incremental](#-carga-incremental)
 * [Auditoria](#-auditoria)
 * [Estrutura do Projeto](#-estrutura-do-projeto)
 * [Stack Tecnológica](#-stack-tecnológica)
-
-
+* [Execução com Docker](#-execução-com-docker)
 
 ---
 
-#  Visão Geral
+# 📊 Visão Geral
 
-Este projeto foi desenvolvido com o objetivo de simular um pipeline de dados corporativo, contemplando:
+O projeto simula um ambiente de **Engenharia de Dados moderno**, contemplando:
 
 * Ingestão de dados via API pública
-* Armazenamento de dados brutos (Raw Layer)
-* Transformação e modelagem dimensional
+* Armazenamento em Data Lake (Raw/Bronze)
+* Processamento distribuído com Spark
+* Transformação e padronização dos dados
+* Modelagem dimensional em Data Warehouse
 * Carga incremental controlada
 * Auditoria de execução
-* Orquestração com Airflow
+* Orquestração de pipelines com Airflow
 
 ---
 
-#  Arquitetura
+# 🏗 Arquitetura
 
-A arquitetura segue um padrão clássico de Data Warehouse:
+O pipeline segue a arquitetura **Data Lake + Data Warehouse**:
 
 ```
-API → Camada Raw (JSON) → Transformação → Data Warehouse (Postgres) → Consultas Analíticas
+API
+ │
+ ▼
+Raw Layer (JSON)
+ │
+ ▼
+Spark Processing
+ │
+ ▼
+Silver Layer
+ │
+ ▼
+Data Warehouse (PostgreSQL)
+ │
+ ▼
+Analytics / BI
 ```
 
-Camadas:
+Componentes principais:
 
-1. Ingestão
-2. Raw
-3. Transformação
-4. Data Warehouse
-5. Camada Analítica
+* **API Source** – origem dos dados
+* **Data Lake** – armazenamento bruto
+* **Spark** – processamento distribuído
+* **PostgreSQL** – Data Warehouse
+* **Airflow** – orquestração
 
 ---
 
-#  Fluxo de Dados
+# 🔄 Fluxo de Dados
 
-## 1️ Ingestão
+## 1️⃣ Ingestão
 
-* Consumo da API FakeStore
-* Extração de:
+Coleta de dados da **FakeStore API**.
 
-  * Products
-  * Users
-  * Carts
-* Salvamento em JSON na camada Raw
+Entidades extraídas:
 
-## 2️ Camada Raw
+* Products
+* Users
+* Carts
 
-* Dados armazenados sem transformação
-* Organização por data de extração
-* Base para reprocessamento futuro
+Os dados são armazenados em **JSON na camada Raw**.
 
-## 3️ Transformação
+---
 
+## 2️⃣ Camada Raw (Bronze)
+
+Características:
+
+* Dados **sem transformação**
+* Armazenamento em formato JSON
+* Organização por data de ingestão
+* Permite **reprocessamento completo**
+
+---
+
+## 3️⃣ Processamento com Spark
+
+O **Apache Spark** é utilizado para:
+
+* Leitura dos dados da camada Raw
 * Limpeza e padronização
 * Conversão de tipos
-* Tratamento de nulos
-* Separação em dimensões e fatos
+* Normalização dos dados
+* Preparação para carga analítica
 
-## 4️ Data Warehouse
+Essa etapa gera a **camada Silver**.
 
-* Modelo dimensional (Star Schema)
-* Separação entre tabelas fato e dimensão
-* Uso de surrogate keys
+
+## 4️⃣ Camada Silver
+
+Nesta camada os dados já estão:
+
+* Estruturados
+* Limpos
+* Padronizados
+* Prontos para modelagem analítica
 
 ---
 
-#  Modelagem Dimensional
+## 5️⃣ Data Warehouse
 
-O projeto utiliza o padrão **Star Schema**, separando:
+Os dados processados são carregados em um **Data Warehouse PostgreSQL**, utilizando modelagem dimensional.
 
-##  Dimensões
+---
+
+# 🧱 Camadas de Dados
+
+O projeto segue o padrão **Medallion Architecture**:
+
+| Camada     | Descrição                         |
+| ---------- | --------------------------------- |
+| **Bronze** | Dados brutos da API               |
+| **Silver** | Dados tratados com Spark          |
+| **Gold**   | Dados modelados no Data Warehouse |
+
+---
+
+# ⭐ Modelagem Dimensional
+
+O Data Warehouse segue o padrão **Star Schema**.
+
+## Dimensões
 
 * `dim_product`
 * `dim_user`
@@ -96,18 +151,20 @@ O projeto utiliza o padrão **Star Schema**, separando:
 Características:
 
 * Dados descritivos
-* Identificador substituto (Surrogate Key)
-* Preparado para evolução (SCD)
+* Uso de **Surrogate Keys**
+* Preparado para evolução futura
 
-##  Tabela Fato
+---
 
-* `fact_sales`
-* Contém métricas quantitativas
-* Chaves estrangeiras para dimensões
+## Tabela Fato
+
+`fact_sales`
+
+Contém métricas quantitativas e relacionamentos com dimensões.
 
 Exemplo estrutural:
 
-```sql
+```
 fact_sales
 -----------
 id
@@ -121,110 +178,107 @@ total_amount
 
 ---
 
-#  Carga Incremental
+# 🔁 Carga Incremental
 
-O pipeline implementa estratégia de controle de execução:
+O pipeline implementa estratégia de controle de execução.
 
-* Registro de execução via auditoria
+Funcionalidades:
+
+* Controle de execução por auditoria
 * Evita reprocessamento desnecessário
-* Preparado para:
-
-  * Controle por timestamp
-  * Controle por ID máximo
-  * Implementação futura de SCD Tipo 2
+* Preparado para expansão futura
+* Controle por timestamp
+* Controle por ID máximo
 
 ---
 
-#  Auditoria
+# 🧾 Auditoria
 
 Tabela: `etl_audit_log`
 
-Campos principais:
-
-| Campo          | Descrição                    |
-| -------------- | ---------------------------- |
-| process_name   | Nome do processo executado   |
-| start_time     | Início da execução           |
-| end_time       | Fim da execução              |
-| status         | Sucesso / Falha              |
-| rows_processed | Quantidade processada        |
-| error_message  | Mensagem de erro (se houver) |
+| Campo          | Descrição             |
+| -------------- | --------------------- |
+| process_name   | Nome do processo      |
+| start_time     | Início da execução    |
+| end_time       | Fim da execução       |
+| status         | Sucesso / Falha       |
+| rows_processed | Quantidade processada |
+| error_message  | Mensagem de erro      |
 
 Objetivo:
 
 * Monitoramento
-* Rastreabilidade
-* Governança
+* Observabilidade
+* Governança de dados
 
 ---
 
-#  Estrutura do Projeto
+# 📂 Estrutura do Projeto
 
 ```
-data-pipeline/
+data-pipeline
 │
-├── airflow/
-│   ├── dags/
-│   └── logs/              # Ignorado no Git
+├── airflow
+│   ├── dags
+│   └── logs
 │
-├── src/
-│   ├── ingestion/
-│   ├── transform/
-│   ├── warehouse/
-│   └── data/
-│       └── raw/           # Ignorado no Git
+├── src
+│   ├── ingestion
+│   │   └── api_ingestion.py
+│   │
+│   ├── spark
+│   │   └── bronze_to_silver.py
+│   │
+│   ├── warehouse
+│   │   └── load_dw.py
+│   │
+│   └── data
+│       ├── raw
+│       └── silver
 │
-├── sql/
+├── sql
+│
+├── docker-compose.yml
 ├── requirements.txt
-└── .gitignore
+└── README.md
 ```
 
 ---
 
-#  Stack Tecnológica
+# 🧰 Stack Tecnológica
 
-| Tecnologia     | Finalidade                 |
-| -------------- | ---------------------------|
-| Python         | Ingestão e transformação   |
-| PostgreSQL     | Data Warehouse             |
-| Docker         | Containerização do ambiente|
-| Apache Airflow | Orquestração               |
-| SQL            | Modelagem e consultas      |
-| Git            | Versionamento              |
+| Tecnologia     | Finalidade                |
+| -------------- | ------------------------- |
+| Python         | Ingestão e transformação  |
+| Apache Spark   | Processamento distribuído |
+| PostgreSQL     | Data Warehouse            |
+| Apache Airflow | Orquestração de pipelines |
+| Docker         | Containerização           |
+| SQL            | Modelagem e consultas     |
+| Git            | Versionamento             |
 
 ---
 
-# 🐳 Containerização com Docker
+# 🐳 Execução com Docker
 
-O projeto é executado em ambiente containerizado utilizando **Docker**, garantindo:
+Todo o ambiente é executado via Docker.
 
-* Isolamento de dependências
-* Reprodutibilidade do ambiente
-* Facilidade de deploy
-* Simulação de ambiente corporativo
+Serviços disponíveis:
 
-## 🔹 Serviços Containerizados
+* **Spark Master**
+* **Spark Worker**
+* **PostgreSQL (DW)**
+* **PostgreSQL (Airflow Metadata)**
+* **Airflow Scheduler**
+* **Airflow Webserver**
 
-* **PostgreSQL** – Banco de dados do Data Warehouse
-* **Apache Airflow** – Orquestração do pipeline
-* (Opcional) Serviços auxiliares conforme necessidade
+# Subir ambiente
 
-## ▶️ Execução do Projeto
-
-Para subir o ambiente:
-
-```bash
 docker-compose up -d
-```
 
-Para derrubar o ambiente:
+# Interfaces
 
-```bash
-docker-compose down
-```
-
-O uso de Docker permite que qualquer pessoa execute o projeto sem necessidade de configuração manual de banco, Airflow ou dependências Python.
-
+* Airflow:http://localhost:8080
 
 
 

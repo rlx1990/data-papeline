@@ -1,15 +1,53 @@
+#PY
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+*.db
+
+#AMBIENTE
+venv/
+.env/
 .env
 
-# Airflow
+#AIR
 airflow/logs/
-airflow/*.db
-airflow/.env
-dw_backup.dump
+airflow/airflow.db
+airflow/*.pid
+airflow/*.cfg
 
-# Dados
+#DATA
 src/data/raw/
-src/data/staging/
-src/data/processed/
+src/data/silver/
+src/data/gold/
+*.csv
+*.json
+*.parquet
 
+#DOCKER
+docker-data/
+*.env
+
+#IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+#NOTEBOOKS
+.ipynb_checkpoints/
+
+#LOGS
+logs/
+*.log
+
+#BUILD
+dist/
+build/
+*.egg-info/
